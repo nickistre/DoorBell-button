@@ -135,6 +135,10 @@ void pressedLoop() {
     // Blink led on communication error
     blink(ledPin); 
   }
+  else {
+    // Wait some time before letting button press again
+    delay(500);
+  }
 }
 
 
