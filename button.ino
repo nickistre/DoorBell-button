@@ -164,10 +164,10 @@ boolean sendDoorBellPress()
   RF24NetworkHeader header(chime_node, TYPE_BUTTON_PRESS);
   bool ok = network.write(header,&payload,sizeof(payload));
   if (ok) {
-    printf_P(PSTR("ok."));
+    printf_P(PSTR("ok.\r\n"));
   }
   else {
-    printf_P(PSTR("failed."));
+    printf_P(PSTR("failed.\r\n"));
   }
   return ok;
 }
