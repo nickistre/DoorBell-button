@@ -107,10 +107,12 @@ void loop(){
     // check if the pushbutton is pressed.
     if (buttonState == LOW) {
       // Button is being pressed.
+      printf_P(PSTR("Detected Button Press: %lu\r\n"), millis());
       pressedLoop();
     } 
     else {
       // Button is not being pressed.
+      printf_P(PSTR("Detected Button Release: %lu\r\n"), millis());
       notPressedLoop();
     }
   }
