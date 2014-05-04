@@ -9,7 +9,9 @@
 #ifndef __NODECONFIG_H__
 #define __NODECONFIG_H__
 
+boolean nodeconfig_exists();
 uint8_t nodeconfig_read(void);
 void nodeconfig_listen(void);
+void nodeconfig_update(uint16_t new_address);
 
 #endif // __NODECONFIG_H__

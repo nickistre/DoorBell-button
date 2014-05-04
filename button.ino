@@ -9,6 +9,7 @@
 
 #include "nodeconfig.h"
 #include "printf.h"
+#include "doorbell.h"
 
 /*
   DoorBell Button
@@ -29,13 +30,13 @@
 const int buttonPin = 2;     // the number of the pushbutton pin
 const int ledPin =  3;      // the number of the LED pin
 
-const uint16_t chime_node = 1; // The address of the chime node
+const uint16_t chime_node = 0; // The address of the chime node
 
 const uint8_t radio_cepin = 9; // Pin attached to Chip Enable on RF module
 const uint8_t radio_cspin = 10; // Pin attached to Chip Select on RF module
 
 const int radioChannel = 100;  // The radio channel to use
-const int serialSpeed = 57600; // The serial port speed
+#define serialSpeed 57600 // The serial port speed
 
 // variables will change:
 int buttonState = 0;         // variable for reading the pushbutton status
@@ -54,17 +55,27 @@ void setup() {
   // Print preamble
   //
 
-  Serial.begin(57600);
+  Serial.begin(serialSpeed);
   printf_begin();
-  printf_P(PSTR("\n\rDoorBell\n\r"));
+  printf_P(PSTR("\n\rDoorBell Button Node\n\r"));
   printf_P(PSTR("VERSION: " __TAG__ "\n\r"));
+  printf_P(PSTR("Send 'HELP' via serial to get a list of available commands\r\n"));
   
   //
   // Pull node out of eeprom
   //
   
   // Which node are we?
+  if (!nodeconfig_exists()) {
+    printf_P(PSTR("Node address not configured!  Use help to see about setting up address\r\n"));
+    // Just look through checking serial
+    while(1) {
+      checkSerial();
+    }
+  }
+  
   this_node = nodeconfig_read();
+  
   printf_P(PSTR("Chime Node: %i\n\r"), chime_node);
   
   //
@@ -94,25 +105,38 @@ void loop(){
   // check if the buttons state changed
   if (buttonState != buttonStateLast) {
     // check if the pushbutton is pressed.
-    // if it is, the buttonState is HIGH:
     if (buttonState == LOW) {
-      // Blink LED pin
-      digitalWrite(ledPin, LOW);
-      bool result = sendDoorBellPress();
-      
-      if (!result) {
-        blink(ledPin); 
-      }
+      // Button is being pressed.
+      pressedLoop();
     } 
     else {
-      // turn LED off:
-      digitalWrite(ledPin, HIGH); 
+      // Button is not being pressed.
+      notPressedLoop();
     }
   }
   
   // Setup button state last for next loop.
   buttonStateLast = buttonState;
+  
+  checkSerial();
 }
+
+void notPressedLoop() {
+  // Simply have the led on high
+  digitalWrite(ledPin, HIGH);
+}
+
+void pressedLoop() {
+  // Turn off led
+  digitalWrite(ledPin, LOW);
+  bool result = sendDoorBellPress();
+  
+  if (!result) {
+    // Blink led on communication error
+    blink(ledPin); 
+  }
+}
+
 
 void blink(int pin) {
   for (int i=0; i < 3; i++) {
@@ -121,19 +145,29 @@ void blink(int pin) {
 }
 
 void slowBlink(int pin, int stepDistance, int stepDelay) {
-  for (int i = 255; i >= 0; i -= stepDistance) {
-    analogWrite(pin, i);
-    delay(stepDelay);
-  }
-  analogWrite(pin, 0);
   for (int i = 0; i <= 255; i += stepDistance) {
     analogWrite(pin, i);
     delay(stepDelay);
   }
   analogWrite(pin, 255);
+  for (int i = 255; i >= 0; i -= stepDistance) {
+    analogWrite(pin, i);
+    delay(stepDelay);
+  }
+  analogWrite(pin, 0);
 }
 
 boolean sendDoorBellPress()
 {
-  return false;
+  printf_P(PSTR("Sending message to chime node at address %i that button was pressed: "), chime_node);
+  payload_button_press payload = {};
+  RF24NetworkHeader header(chime_node, TYPE_BUTTON_PRESS);
+  bool ok = network.write(header,&payload,sizeof(payload));
+  if (ok) {
+    printf_P(PSTR("ok."));
+  }
+  else {
+    printf_P(PSTR("failed."));
+  }
+  return ok;
 }
