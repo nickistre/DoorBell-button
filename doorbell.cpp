@@ -5,6 +5,7 @@
 const unsigned int serial_buffer_length = 255;
 char buffer[serial_buffer_length];  
 
+void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
 void needReset() {
   printf_P(PSTR("\r\nPress RESET to continue!\r\n"));
@@ -19,28 +20,13 @@ void loadBufferLine()
   buffer[bytesRead] = char(0); // Make sure null terminator is setup.  
 }
 
-void checkSerial() {
-  // Check serial connection for any new commands
-  if (Serial.available() > 0) {
-    loadBufferLine();
-    String command = String(buffer);
-    command.trim();
-    
-    // Check for which command was run and handle this command
-    if (command.equals("SET NODE ADDRESS")) {
-      handleUpdateNodeAddress();
-    }
-    else if (command.equals("HELP")) {
-      showHelpInfo();
-    }
-  }
-}
 
 void showHelpInfo() {
   printf_P(PSTR("The following commands are avaiable: \r\n"));
   
   printf_P(PSTR(" HELP\r\n"));
   printf_P(PSTR(" SET NODE ADDRESS\r\n"));
+  printf_P(PSTR(" RESET\r\n"));
   
   printf_P(PSTR("\r\n"));
 }
@@ -76,4 +62,33 @@ void handleUpdateNodeAddress() {
   nodeconfig_update(new_node);
   
   needReset();
+}
+
+void handleReset() {
+  printf_P(PSTR("Triggering software reset\r\n"));
+  printf_P(PSTR("----\r\n \r\n"));
+  // Wait for outgoing serial to finish
+  Serial.flush();
+  resetFunc();
+}
+
+
+void checkSerial() {
+  // Check serial connection for any new commands
+  if (Serial.available() > 0) {
+    loadBufferLine();
+    String command = String(buffer);
+    command.trim();
+    
+    // Check for which command was run and handle this command
+    if (command.equals("SET NODE ADDRESS")) {
+      handleUpdateNodeAddress();
+    }
+    else if (command.equals("HELP")) {
+      showHelpInfo();
+    }
+    else if (command.equals("RESET")) {
+      handleReset();
+    }
+  }
 }

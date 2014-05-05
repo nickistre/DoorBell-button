@@ -19,8 +19,6 @@ struct payload_button_press {
 };
 
 void checkSerial();
-void showHelpInfo();
-void handleUpdateNodeAddress();
 
 #endif // __DOORBELL_H__
 
