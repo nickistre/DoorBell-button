@@ -7,9 +7,9 @@
 #include <Sync.h>
 #include <SPI.h>
 
-#include "nodeconfig.h"
-#include "printf.h"
-#include "doorbell.h"
+#include <nodeconfig.h>
+#include <printf.h>
+#include <doorbell.h>
 
 /*
   DoorBell Button
@@ -115,10 +115,10 @@ void loop(){
       printf_P(PSTR("Detected Button Release: %lu\r\n"), millis());
       notPressedLoop();
     }
-  }
   
-  // Setup button state last for next loop.
-  buttonStateLast = buttonState;
+    // Setup button state last for next loop.
+    buttonStateLast = buttonState;
+  }
   
   checkSerial();
 }
